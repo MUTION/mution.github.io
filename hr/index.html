@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Employee Profile Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f4f5f7;--sidebar:#1a1a2e;--card:#fff;--text:#1a1a2e;--text-light:#6b7280;--accent:#2563eb;--border:#e5e7eb;--green:#10b981;--red:#ef4444;--orange:#f59e0b;--radius:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+/* Sidebar */
+.sidebar{width:240px;background:var(--sidebar);color:#fff;padding:0;display:flex;flex-direction:column;position:fixed;height:100vh;z-index:10}
+.sidebar-header{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-header h2{font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#fff}
+.sidebar-header span{font-size:11px;color:rgba(255,255,255,.5);display:block;margin-top:4px}
+.nav{padding:12px 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 20px;font-size:13px;color:rgba(255,255,255,.6);cursor:pointer;transition:.2s;border-left:3px solid transparent}
+.nav-item:hover,.nav-item.active{background:rgba(255,255,255,.06);color:#fff;border-left-color:var(--accent)}
+.nav-item svg{width:18px;height:18px;opacity:.7}
+.nav-item.active svg{opacity:1}
+.nav-section{padding:8px 20px 6px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);margin-top:8px}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35)}
+/* Main */
+.main{margin-left:240px;flex:1;padding:0}
+/* Topbar */
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-left h1{font-size:18px;font-weight:700;color:var(--text)}
+.topbar-left span{font-size:12px;color:var(--text-light);background:var(--bg);padding:3px 10px;border-radius:20px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.refresh-time{font-size:11px;color:var(--text-light)}
+/* Search */
+.search-bar{position:relative;width:340px}
+.search-bar input{width:100%;padding:10px 14px 10px 40px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);transition:.2s;outline:none}
+.search-bar input:focus{border-color:var(--accent);background:#fff}
+.search-bar svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--text-light)}
+.search-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.12);display:none;max-height:280px;overflow-y:auto;z-index:20}
+.search-dropdown.show{display:block}
+.search-item{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;font-size:13px;transition:.15s}
+.search-item:hover{background:var(--bg)}
+.search-item .sid{font-weight:600;color:var(--accent);width:60px}
+.search-item .sname{flex:1}
+.search-item .sdept{color:var(--text-light);font-size:11px}
+/* Content */
+.content{padding:24px 32px}
+/* Welcome state */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center}
+.welcome svg{width:80px;height:80px;color:var(--border);margin-bottom:20px}
+.welcome h2{font-size:20px;color:var(--text);margin-bottom:8px}
+.welcome p{color:var(--text-light);font-size:14px;max-width:400px}
+/* Dashboard */
+.dashboard{display:none}
+/* Profile header */
+.profile-header{background:var(--card);border-radius:var(--radius);padding:24px 28px;border:1px solid var(--border);display:flex;align-items:center;gap:24px;margin-bottom:20px}
+.avatar{width:72px;height:72px;border-radius:50%;background:var(--sidebar);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0}
+.profile-info{flex:1}
+.profile-info h2{font-size:20px;font-weight:700;margin-bottom:2px}
+.profile-info .role{font-size:13px;color:var(--text-light)}
+.profile-meta{display:flex;gap:24px;margin-top:10px}
+.profile-meta .meta-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-light)}
+.profile-meta .meta-item svg{width:14px;height:14px}
+.status-badge{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600}
+.status-badge.active{background:#d1fae5;color:#065f46}
+.status-badge.on-leave{background:#fef3c7;color:#92400e}
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px}
+.kpi-card{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--border)}
+.kpi-card .label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);margin-bottom:8px}
+.kpi-card .value{font-size:24px;font-weight:700}
+.kpi-card .sub{font-size:11px;margin-top:6px;display:flex;align-items:center;gap:4px}
+.kpi-card .sub.up{color:var(--green)}
+.kpi-card .sub.down{color:var(--red)}
+.kpi-card .sub.neutral{color:var(--text-light)}
+/* Charts area */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.chart-card{background:var(--card);border-radius:var(--radius);padding:20px 24px;border:1px solid var(--border)}
+.chart-card h3{font-size:13px;font-weight:600;margin-bottom:4px}
+.chart-card .chart-sub{font-size:11px;color:var(--text-light);margin-bottom:16px}
+/* Bar chart */
+.bar-chart{display:flex;align-items:flex-end;gap:12px;height:160px;padding-top:10px}
+.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bar-wrapper{width:100%;display:flex;gap:4px;align-items:flex-end;height:140px;justify-content:center}
+.bar{width:20px;border-radius:4px 4px 0 0;transition:.3s;position:relative}
+.bar.perf{background:var(--sidebar)}
+.bar.att{background:var(--border)}
+.bar-label{font-size:10px;color:var(--text-light)}
+.bar-val{font-size:9px;color:var(--text-light);position:absolute;top:-14px;left:50%;transform:translateX(-50%);white-space:nowrap}
+/* Donut */
+.donut-container{display:flex;align-items:center;gap:24px}
+.donut-wrap{position:relative;width:140px;height:140px;flex-shrink:0}
+.donut-wrap canvas{width:140px;height:140px}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.donut-center .dc-val{font-size:28px;font-weight:700}
+.donut-center .dc-label{font-size:10px;color:var(--text-light)}
+.donut-legend{display:flex;flex-direction:column;gap:10px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:12px}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend-val{margin-left:auto;font-weight:600;min-width:36px;text-align:right}
+/* Details table */
+.details-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.detail-card{background:var(--card);border-radius:var(--radius);padding:20px 24px;border:1px solid var(--border)}
+.detail-card h3{font-size:13px;font-weight:600;margin-bottom:14px}
+.detail-table{width:100%}
+.detail-table tr{border-bottom:1px solid var(--border)}
+.detail-table tr:last-child{border-bottom:none}
+.detail-table td{padding:9px 0;font-size:12px}
+.detail-table td:first-child{color:var(--text-light);width:140px}
+.detail-table td:last-child{font-weight:500}
+/* Skills */
+.skill-bars{display:flex;flex-direction:column;gap:12px}
+.skill-row{display:flex;align-items:center;gap:12px}
+.skill-name{font-size:12px;width:100px;color:var(--text-light)}
+.skill-track{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.skill-fill{height:100%;border-radius:4px;background:var(--sidebar);transition:.5s}
+.skill-pct{font-size:11px;font-weight:600;width:36px;text-align:right}
+/* Responsive */
+@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .charts-row,.details-row{grid-template-columns:1fr}
+  .content{padding:16px}
+  .topbar{padding:12px 16px}
+  .search-bar{width:260px}
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h2>HR Dashboard</h2>
+    <span>People Analytics</span>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Menu</div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Overview
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Analytics
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Report
+    </div>
+    <div class="nav-section">Filters</div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v-2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Department
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Location
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      Band / Level
+    </div>
+  </nav>
+  <div class="sidebar-footer">Last Refresh: <span id="refreshDate"></span></div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Employee Profile</h1>
+      <span id="empCount">15 Employees</span>
+    </div>
+    <div class="topbar-right">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search Employee ID or Name..." autocomplete="off">
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Welcome -->
+    <div class="welcome" id="welcomeState">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v-2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      <h2>Hi, Welcome Back!</h2>
+      <p>Search an Employee ID or Name above to view their full profile, performance metrics, and analytics.</p>
+    </div>
+
+    <!-- Dashboard (hidden until search) -->
+    <div class="dashboard" id="dashboard">
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="avatar" id="avatar"></div>
+        <div class="profile-info">
+          <h2 id="empName"></h2>
+          <div class="role" id="empRole"></div>
+          <div class="profile-meta">
+            <div class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4-4v-2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span id="empId2"></span>
+            </div>
+            <div class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span id="empLocation"></span>
+            </div>
+            <div class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+              <span id="empDept"></span>
+            </div>
+            <div class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span id="empHire"></span>
+            </div>
+          </div>
+        </div>
+        <span class="status-badge" id="empStatus"></span>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="label">Salary</div>
+          <div class="value" id="kpiSalary"></div>
+          <div class="sub neutral" id="kpiBand"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Performance Score</div>
+          <div class="value" id="kpiPerf"></div>
+          <div class="sub" id="kpiPerfTrend"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Attendance Rate</div>
+          <div class="value" id="kpiAtt"></div>
+          <div class="sub" id="kpiAttTrend"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Training Hours</div>
+          <div class="value" id="kpiTraining"></div>
+          <div class="sub neutral" id="kpiCerts"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Satisfaction</div>
+          <div class="value" id="kpiSat"></div>
+          <div class="sub" id="kpiSatLevel"></div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Performance &amp; Attendance Trend</h3>
+          <div class="chart-sub">Last 5 review periods</div>
+          <div class="bar-chart" id="barChart"></div>
+        </div>
+        <div class="chart-card">
+          <h3>Work Distribution</h3>
+          <div class="chart-sub">Projects, Leaves &amp; Overtime breakdown</div>
+          <div class="donut-container">
+            <div class="donut-wrap"><canvas id="donutCanvas" width="280" height="280"></canvas><div class="donut-center"><div class="dc-val" id="donutTotal"></div><div class="dc-label">Total Days</div></div></div>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Details -->
+      <div class="details-row">
+        <div class="detail-card">
+          <h3>Personal Information</h3>
+          <table class="detail-table">
+            <tr><td>Full Name</td><td id="detName"></td></tr>
+            <tr><td>Age</td><td id="detAge"></td></tr>
+            <tr><td>Gender</td><td id="detGender"></td></tr>
+            <tr><td>Email</td><td id="detEmail"></td></tr>
+            <tr><td>Phone</td><td id="detPhone"></td></tr>
+            <tr><td>Location</td><td id="detLoc"></td></tr>
+          </table>
+        </div>
+        <div class="detail-card">
+          <h3>Employment Details</h3>
+          <table class="detail-table">
+            <tr><td>Employee ID</td><td id="detId"></td></tr>
+            <tr><td>Department</td><td id="detDeptFull"></td></tr>
+            <tr><td>Team</td><td id="detTeam"></td></tr>
+            <tr><td>Manager</td><td id="detManager"></td></tr>
+            <tr><td>Band</td><td id="detBand"></td></tr>
+            <tr><td>Tenure</td><td id="detTenure"></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Skills / Performance breakdown -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Competency Assessment</h3>
+          <div class="chart-sub">Based on latest review cycle</div>
+          <div class="skill-bars" id="skillBars"></div>
+        </div>
+        <div class="chart-card">
+          <h3>Quick Stats</h3>
+          <div class="chart-sub">Year-to-date summary</div>
+          <table class="detail-table">
+            <tr><td>Projects Assigned</td><td id="qsProjects"></td></tr>
+            <tr><td>Training Hours</td><td id="qsTraining"></td></tr>
+            <tr><td>Certifications</td><td id="qsCerts"></td></tr>
+            <tr><td>Leaves Taken</td><td id="qsLeaves"></td></tr>
+            <tr><td>Overtime Hours</td><td id="qsOvertime"></td></tr>
+            <tr><td>Avg Performance</td><td id="qsAvgPerf"></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let employees = [];
+const years = ['2022','2023','2024','2025','2026'];
+
+document.getElementById('refreshDate').textContent = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+
+fetch('data.json').then(r=>r.json()).then(data=>{
+  employees = data;
+  document.getElementById('empCount').textContent = data.length + ' Employees';
+  initSearch();
+});
+
+function initSearch(){
+  const input = document.getElementById('searchInput');
+  const dd = document.getElementById('searchDropdown');
+  input.addEventListener('input', ()=>{
+    const q = input.value.trim().toLowerCase();
+    if(!q){dd.classList.remove('show');return;}
+    const matches = employees.filter(e=>e.id.toLowerCase().includes(q)||e.name.toLowerCase().includes(q));
+    if(!matches.length){dd.innerHTML='<div style="padding:12px;font-size:13px;color:#6b7280">No results found</div>';dd.classList.add('show');return;}
+    dd.innerHTML = matches.map(e=>`<div class="search-item" data-id="${e.id}"><span class="sid">${e.id}</span><span class="sname">${e.name}</span><span class="sdept">${e.department}</span></div>`).join('');
+    dd.classList.add('show');
+    dd.querySelectorAll('.search-item').forEach(item=>{
+      item.addEventListener('click',()=>{
+        const emp = employees.find(e=>e.id===item.dataset.id);
+        if(emp) showProfile(emp);
+        dd.classList.remove('show');
+        input.value = emp.id + ' - ' + emp.name;
+      });
+    });
+  });
+  document.addEventListener('click',e=>{if(!e.target.closest('.search-bar'))dd.classList.remove('show');});
+}
+
+function showProfile(e){
+  document.getElementById('welcomeState').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+
+  // Header
+  document.getElementById('avatar').textContent = e.photo;
+  document.getElementById('empName').textContent = e.name;
+  document.getElementById('empRole').textContent = e.role;
+  document.getElementById('empId2').textContent = e.id;
+  document.getElementById('empLocation').textContent = e.location;
+  document.getElementById('empDept').textContent = e.department;
+  const hd = new Date(e.hireDate);
+  document.getElementById('empHire').textContent = 'Joined ' + hd.toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+  const badge = document.getElementById('empStatus');
+  badge.textContent = e.status;
+  badge.className = 'status-badge ' + (e.status==='Active'?'active':'on-leave');
+
+  // KPIs
+  const latestPerf = e.performance[e.performance.length-1];
+  const prevPerf = e.performance[e.performance.length-2];
+  const perfDelta = ((latestPerf - prevPerf)/prevPerf*100).toFixed(1);
+  const latestAtt = e.attendance[e.attendance.length-1];
+  const prevAtt = e.attendance[e.attendance.length-2];
+  const attDelta = (latestAtt - prevAtt).toFixed(1);
+
+  document.getElementById('kpiSalary').textContent = '\u00A3' + (e.salary/1000).toFixed(0) + 'K';
+  document.getElementById('kpiBand').textContent = 'Band ' + e.band;
+  document.getElementById('kpiPerf').textContent = latestPerf.toFixed(1) + ' / 5.0';
+  const perfTrend = document.getElementById('kpiPerfTrend');
+  perfTrend.textContent = (perfDelta>=0?'\u25B2':'\u25BC') + ' ' + Math.abs(perfDelta) + '% vs last period';
+  perfTrend.className = 'sub ' + (perfDelta>=0?'up':'down');
+  document.getElementById('kpiAtt').textContent = latestAtt + '%';
+  const attTrend = document.getElementById('kpiAttTrend');
+  attTrend.textContent = (attDelta>=0?'\u25B2':'\u25BC') + ' ' + Math.abs(attDelta) + 'pp vs last period';
+  attTrend.className = 'sub ' + (attDelta>=0?'up':'down');
+  document.getElementById('kpiTraining').textContent = e.training + ' hrs';
+  document.getElementById('kpiCerts').textContent = e.certifications + ' Certifications';
+  document.getElementById('kpiSat').textContent = e.satisfaction.toFixed(1) + ' / 5.0';
+  const satLevel = document.getElementById('kpiSatLevel');
+  const satText = e.satisfaction >= 4.5 ? 'Excellent' : e.satisfaction >= 4.0 ? 'Very Good' : e.satisfaction >= 3.5 ? 'Good' : 'Needs Attention';
+  satLevel.textContent = satText;
+  satLevel.className = 'sub ' + (e.satisfaction >= 4.0 ? 'up' : e.satisfaction >= 3.5 ? 'neutral' : 'down');
+
+  // Bar chart
+  const barChart = document.getElementById('barChart');
+  barChart.innerHTML = '';
+  const maxPerf = 5;
+  for(let i=0;i<5;i++){
+    const ph = (e.performance[i]/maxPerf)*130;
+    const ah = (e.attendance[i]/100)*130;
+    barChart.innerHTML += `<div class="bar-group"><div class="bar-wrapper"><div class="bar perf" style="height:${ph}px"><span class="bar-val">${e.performance[i]}</span></div><div class="bar att" style="height:${ah}px"><span class="bar-val">${e.attendance[i]}%</span></div></div><div class="bar-label">${years[i]}</div></div>`;
+  }
+
+  // Donut
+  const total = e.projects + e.leaves + e.overtime;
+  document.getElementById('donutTotal').textContent = total;
+  drawDonut([
+    {label:'Projects',value:e.projects,color:'#1a1a2e'},
+    {label:'Leaves',value:e.leaves,color:'#6b7280'},
+    {label:'Overtime',value:e.overtime,color:'#d1d5db'}
+  ], total);
+
+  // Details
+  document.getElementById('detName').textContent = e.name;
+  document.getElementById('detAge').textContent = e.age + ' years';
+  document.getElementById('detGender').textContent = e.gender;
+  document.getElementById('detEmail').textContent = e.email;
+  document.getElementById('detPhone').textContent = e.phone;
+  document.getElementById('detLoc').textContent = e.location;
+  document.getElementById('detId').textContent = e.id;
+  document.getElementById('detDeptFull').textContent = e.department;
+  document.getElementById('detTeam').textContent = e.team;
+  document.getElementById('detManager').textContent = e.manager;
+  document.getElementById('detBand').textContent = e.band;
+  const now = new Date();
+  const tenure = Math.floor((now - hd)/(365.25*24*60*60*1000));
+  const tenureM = Math.floor(((now - hd)/(30.44*24*60*60*1000))%12);
+  document.getElementById('detTenure').textContent = tenure + ' years, ' + tenureM + ' months';
+
+  // Skills (derived from performance & training)
+  const skills = [
+    {name:'Technical',pct:Math.min(100,Math.round(latestPerf/5*100))},
+    {name:'Leadership',pct:Math.min(100,Math.round((latestPerf*0.8+e.projects*2)/5*80))},
+    {name:'Communication',pct:Math.min(100,Math.round(e.satisfaction/5*100))},
+    {name:'Teamwork',pct:Math.min(100,Math.round(latestAtt/100*100))},
+    {name:'Learning',pct:Math.min(100,Math.round(e.training/60*100))}
+  ];
+  const sb = document.getElementById('skillBars');
+  sb.innerHTML = skills.map(s=>`<div class="skill-row"><span class="skill-name">${s.name}</span><div class="skill-track"><div class="skill-fill" style="width:${s.pct}%"></div></div><span class="skill-pct">${s.pct}%</span></div>`).join('');
+
+  // Quick stats
+  document.getElementById('qsProjects').textContent = e.projects;
+  document.getElementById('qsTraining').textContent = e.training + ' hrs';
+  document.getElementById('qsCerts').textContent = e.certifications;
+  document.getElementById('qsLeaves').textContent = e.leaves + ' days';
+  document.getElementById('qsOvertime').textContent = e.overtime + ' hrs';
+  const avg = (e.performance.reduce((a,b)=>a+b,0)/e.performance.length).toFixed(2);
+  document.getElementById('qsAvgPerf').textContent = avg + ' / 5.0';
+}
+
+function drawDonut(segments, total){
+  const canvas = document.getElementById('donutCanvas');
+  const ctx = canvas.getContext('2d');
+  const cx=140, cy=140, r=120, lw=36;
+  ctx.clearRect(0,0,280,280);
+  let start = -Math.PI/2;
+  segments.forEach(s=>{
+    const angle = (s.value/total)*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,start,start+angle);
+    ctx.strokeStyle=s.color;
+    ctx.lineWidth=lw;
+    ctx.stroke();
+    start+=angle;
+  });
+  const legend = document.getElementById('donutLegend');
+  legend.innerHTML = segments.map(s=>`<div class="legend-item"><span class="legend-dot" style="background:${s.color}"></span>${s.label}<span class="legend-val">${s.value}</span></div>`).join('');
+}
+</script>
+</body>
+</html>
